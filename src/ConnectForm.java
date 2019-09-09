@@ -7,10 +7,10 @@ public class ConnectForm extends JDialog {
     private JButton buttonCancel;
     private JTextField userField;
     private JPasswordField passwordField;
-    private EmailClient emailClient;
+    private GmailClient gmailClient;
 
-    public ConnectForm(EmailClient eclient) {
-        this.emailClient = eclient;
+    public ConnectForm(GmailClient eclient) {
+        this.gmailClient = eclient;
         this.userField.setText("becker.b.robin@gmail.com");
         this.passwordField.setText("lnhrdmevuyvoybzg");
 
@@ -52,7 +52,7 @@ public class ConnectForm extends JDialog {
     }
 
     private void onOK() {
-        this.emailClient.setParams(this.userField.getText(), this.passwordField.getPassword());
+        this.gmailClient.setParams(this.userField.getText(), this.passwordField.getPassword());
         dispose();
     }
 
