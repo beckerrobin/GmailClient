@@ -1,13 +1,19 @@
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
-import javax.mail.internet.InternetAddress;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class EmailClientGUI implements Runnable {
+public class EmailClientGUI {
     private JList mailList;
     private JButton newButton;
     private JTextArea bodyArea;
@@ -16,83 +22,82 @@ public class EmailClientGUI implements Runnable {
     private JTextField ccField;
     private JLabel accountLabel;
     private JPanel panel;
-    private ArrayList<Mail> mailArrayList = new ArrayList<>();
+    private JScrollPane bodyScroll;
+    private JLabel subjectLabel;
+    private List<Mail> mailArrayList = Collections.synchronizedList(new ArrayList<>());
+    private GmailClient gmailClient;
+    private ExecutorService executorService = Executors.newCachedThreadPool();
 
-    public EmailClientGUI() {
+    private final int emailCount = 3;
+
+    EmailClientGUI(GmailClient gmailClient) {
+        this.gmailClient = gmailClient;
+        this.accountLabel.setText(gmailClient.getUsername());
+
         mailList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                mailList.getSelectedIndex();
+                Mail mail = (Mail) mailList.getSelectedValue();
+                this.fromField.setText(mail.getFrom());
+                this.toField.setText(mail.getTo());
+                this.subjectLabel.setText(mail.getSubject());
+                this.bodyArea.setText(mail.getBody());
+                this.bodyArea.setCaretPosition(0);
             }
         });
+        newButton.addActionListener(e -> newMail());
     }
 
-    public void show() {
+    void show() {
         JFrame frame = new JFrame("Email Client");
         frame.setPreferredSize(new Dimension(800, 600));
         frame.setContentPane(this.panel);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                super.windowClosing(e);
+                try {
+                    executorService.shutdown();
+                    gmailClient.close();
+                } catch (MessagingException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
     }
 
-    public void populateMailList(Folder emailFolder) throws MessagingException {
-        emailFolder.open(Folder.READ_ONLY);
+    private void newMail() {
+        this.toField.setText("");
+        this.bodyArea.setText("");
+    }
+    void populateMailList() throws MessagingException {
+        Folder emailFolder = gmailClient.getOpenFolder("INBOX");
         int mailCount = emailFolder.getMessageCount();
-        Message[] messages = emailFolder.getMessages(mailCount - 10, mailCount);
+
+        Message[] messages;
+        if (mailCount >= emailCount)
+             messages= emailFolder.getMessages(mailCount - emailCount, mailCount);
+        else
+            messages = emailFolder.getMessages();
         for (Message message : messages) {
+            Mail mailObj;
             try {
-                this.mailArrayList.add(new Mail(message));
-                System.out.println(message.getSubject());
-                ArrayList<Mail> messageArrayCopy = new ArrayList<>(this.mailArrayList);
-//                Collections.copy(messageArrayCopy, messageArray);
-                Collections.reverse(messageArrayCopy);
-                this.mailList.setListData(messageArrayCopy.toArray());
-            } catch (MessagingException e) {
+                mailObj = new Mail(message);
+
+                executorService.submit(new SetMailBody(mailObj, emailFolder, gmailClient));
+            } catch (MessagingException | ArrayIndexOutOfBoundsException e) {
                 e.printStackTrace();
+                continue;
             }
+            this.mailArrayList.add(mailObj);
+
+            ArrayList<Mail> messageArrayCopy = new ArrayList<>(this.mailArrayList);
+            Collections.reverse(messageArrayCopy);
+            this.mailList.setListData(messageArrayCopy.toArray());
         }
         Collections.reverse(this.mailArrayList);
         this.mailList.setListData(this.mailArrayList.toArray());
-        emailFolder.close();
-    }
-
-    @Override
-    public void run() {
-        show();
-    }
-}
-
-class Mail implements Runnable{
-    private String subject;
-    private String from;
-    private int id;
-    private String body;
-
-    public Mail(Message message) throws MessagingException {
-        this.subject = message.getSubject();
-        this.from = ((InternetAddress) message.getFrom()[0]).getAddress();
-        this.id = message.getMessageNumber();
-    }
-
-    @Override
-    public String toString() {
-        return subject + " " + from;
-    }
-
-    public String getBody() {
-        return body;
-    }
-
-    public void setBody(String body) {
-        this.body = body;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    @Override
-    public void run() {
-
     }
 }
