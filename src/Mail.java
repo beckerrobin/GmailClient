@@ -2,7 +2,7 @@ import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.internet.InternetAddress;
 
-class Mail{
+public class Mail {
     private String subject;
     private String from;
     private int id;

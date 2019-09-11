@@ -71,6 +71,7 @@
             <properties>
               <background color="-1"/>
               <editable value="false"/>
+              <visible value="false"/>
             </properties>
           </component>
           <scrollpane id="bf84f" binding="bodyScroll">
@@ -102,6 +103,7 @@
               <minimumSize width="14" height="21"/>
               <preferredSize width="14" height="21"/>
               <text value="CC"/>
+              <visible value="false"/>
             </properties>
           </component>
           <component id="9dad6" class="javax.swing.JLabel">

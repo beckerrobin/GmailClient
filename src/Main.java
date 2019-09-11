@@ -21,11 +21,11 @@ public class Main {
         }
         EmailClientGUI gui = new EmailClientGUI(client);
         SwingUtilities.invokeLater(gui::show);
-        if (client.isConnected())
-            try {
-                gui.populateMailList();
-            } catch (MessagingException e) {
-                e.printStackTrace();
-            }
+//        if (client.isConnected())
+//            try {
+//                gui.populateMailList();
+//            } catch (MessagingException e) {
+//                e.printStackTrace();
+//            }
     }
 }
