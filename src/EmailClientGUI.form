@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="EmailClientGUI">
+  <grid id="27dc6" binding="panel" layout-manager="GridBagLayout">
+    <constraints>
+      <xy x="20" y="20" width="767" height="487"/>
+    </constraints>
+    <properties/>
+    <border type="line"/>
+    <children>
+      <component id="b2ee2" class="javax.swing.JLabel" binding="accountLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="0.0" ipadx="10" ipady="10"/>
+        </constraints>
+        <properties>
+          <horizontalAlignment value="0"/>
+          <text value="Konto"/>
+        </properties>
+      </component>
+      <component id="d301d" class="javax.swing.JButton" binding="newButton">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <enabled value="false"/>
+          <hideActionText value="false"/>
+          <horizontalAlignment value="0"/>
+          <text value="Nytt mail"/>
+        </properties>
+      </component>
+      <scrollpane id="67fe0">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <maximumSize width="250" height="32767"/>
+          <minimumSize width="250" height="15"/>
+          <preferredSize width="250" height="128"/>
+        </properties>
+        <border type="none"/>
+        <children>
+          <component id="9c84f" class="javax.swing.JList" binding="mailList">
+            <constraints/>
+            <properties>
+              <focusTraversalPolicyProvider value="false"/>
+              <focusable value="true"/>
+              <layoutOrientation value="0"/>
+              <maximumSize width="0" height="0"/>
+              <minimumSize width="0" height="0"/>
+              <preferredSize width="0" height="0"/>
+              <selectionMode value="0"/>
+            </properties>
+          </component>
+        </children>
+      </scrollpane>
+      <grid id="8250f" binding="rightPanel" layout-manager="GridBagLayout">
+        <constraints>
+          <grid row="1" column="1" row-span="2" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="1.0" weighty="1.0"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="34758" class="javax.swing.JTextField" binding="ccField">
+            <constraints>
+              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="2.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <background color="-1"/>
+              <editable value="false"/>
+            </properties>
+          </component>
+          <scrollpane id="bf84f" binding="bodyScroll">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="1" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="2.0"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="a89d2" class="javax.swing.JTextArea" binding="bodyArea">
+                <constraints/>
+                <properties>
+                  <lineWrap value="true"/>
+                  <minimumSize width="-1" height="17"/>
+                  <rows value="0"/>
+                  <wrapStyleWord value="true"/>
+                </properties>
+              </component>
+            </children>
+          </scrollpane>
+          <component id="2d3e0" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="0.0" weighty="0.0" ipadx="5" ipady="5"/>
+            </constraints>
+            <properties>
+              <focusable value="false"/>
+              <minimumSize width="14" height="21"/>
+              <preferredSize width="14" height="21"/>
+              <text value="CC"/>
+            </properties>
+          </component>
+          <component id="9dad6" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="0.0" weighty="0.0" ipadx="5" ipady="5"/>
+            </constraints>
+            <properties>
+              <focusable value="false"/>
+              <minimumSize width="14" height="21"/>
+              <preferredSize width="14" height="21"/>
+              <text value="To"/>
+            </properties>
+          </component>
+          <component id="11ec6" class="javax.swing.JLabel" binding="fromLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false">
+                <minimum-size width="-1" height="20"/>
+                <maximum-size width="-1" height="20"/>
+              </grid>
+              <gridbag weightx="0.0" weighty="0.0" ipadx="5" ipady="5"/>
+            </constraints>
+            <properties>
+              <autoscrolls value="false"/>
+              <focusable value="false"/>
+              <horizontalAlignment value="10"/>
+              <horizontalTextPosition value="11"/>
+              <minimumSize width="27" height="21"/>
+              <preferredSize width="27" height="21"/>
+              <text value="From"/>
+            </properties>
+          </component>
+          <component id="651e7" class="javax.swing.JTextField" binding="toField">
+            <constraints>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="2.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <background color="-1"/>
+              <editable value="false"/>
+              <enabled value="true"/>
+            </properties>
+          </component>
+          <component id="8069d" class="javax.swing.JTextField" binding="fromField">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="2.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <alignmentX value="0.0"/>
+              <autoscrolls value="false"/>
+              <background color="-1"/>
+              <doubleBuffered value="true"/>
+              <editable value="false"/>
+            </properties>
+          </component>
+          <grid id="2040a" layout-manager="GridBagLayout">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <minimumSize width="515" height="35"/>
+            </properties>
+            <border type="none"/>
+            <children>
+              <component id="9a869" class="javax.swing.JTextField" binding="subjectField">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="2" indent="0" use-parent-layout="false">
+                    <minimum-size width="300" height="30"/>
+                    <preferred-size width="-1" height="30"/>
+                    <maximum-size width="300" height="30"/>
+                  </grid>
+                  <gridbag weightx="2.0" weighty="0.0" ipadx="5" ipady="5"/>
+                </constraints>
+                <properties>
+                  <alignmentX value="0.0"/>
+                  <autoscrolls value="false"/>
+                  <editable value="false"/>
+                  <enabled value="true"/>
+                  <font name="Lato" size="14" style="1"/>
+                  <horizontalAlignment value="10"/>
+                  <minimumSize width="250" height="25"/>
+                  <opaque value="true"/>
+                  <preferredSize width="250" height="30"/>
+                  <text value="Subject"/>
+                </properties>
+              </component>
+              <grid id="dbc50" binding="buttonPanel" layout-manager="GridBagLayout">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="12f21" class="javax.swing.JButton" binding="cancelButton">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false">
+                        <maximum-size width="75" height="-1"/>
+                      </grid>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text value="Avbryt"/>
+                    </properties>
+                  </component>
+                  <component id="df049" class="javax.swing.JButton" binding="sendButton">
+                    <constraints>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false">
+                        <maximum-size width="75" height="-1"/>
+                      </grid>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text value="Skicka"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+            </children>
+          </grid>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>
