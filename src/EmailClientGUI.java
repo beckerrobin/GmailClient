@@ -33,6 +33,9 @@ public class EmailClientGUI {
     private JLabel fromLabel;
     private JTextField toField;
     private JTextField subjectField;
+    private JPanel buttonPanel;
+    private JPanel rightPanel;
+
     EmailClientGUI(GmailClient gmailClient) {
         this.gmailClient = gmailClient;
         this.accountLabel.setText(gmailClient.getUsername());
@@ -52,6 +55,15 @@ public class EmailClientGUI {
         });
         newButton.addActionListener(e -> newMail());
         cancelButton.addActionListener(e -> readMode());
+        sendButton.addActionListener(e -> sendMail());
+    }
+
+    private void sendMail() {
+        // Check to
+        // Check cc
+        // Check body
+        // Send via SMTP
+
     }
 
     void show() {
@@ -87,6 +99,7 @@ public class EmailClientGUI {
 
         this.subjectField.setEditable(true);
         this.subjectField.setBorder(UIManager.getLookAndFeel().getDefaults().getBorder("TextField.border"));
+//        this.subjectField.setBackground(Color.WHITE);
 
         this.fromField.setText(this.gmailClient.getUsername());
         this.sendButton.setVisible(true);
@@ -99,6 +112,7 @@ public class EmailClientGUI {
         this.toField.setBorder(UIManager.getLookAndFeel().getDefaults().getBorder("TextField.border"));
         this.ccField.setEditable(false);
         this.ccField.setBorder(UIManager.getLookAndFeel().getDefaults().getBorder("TextField.border"));
+//        this.subjectField.setText("Subject");
         this.subjectField.setEditable(false);
         this.subjectField.setBorder(null);
 
