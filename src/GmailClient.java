@@ -41,7 +41,15 @@ public class GmailClient {
     }
 
     void connect() throws MessagingException {
-        this.emailStore.connect(this.username, this.password);
+        for (int i = 0; i < 3; i++) {
+            try {
+                this.emailStore.connect(this.username, this.password);
+                break;
+            } catch (MessagingException e) {
+                System.out.println("Could not connect: " + e.getMessage());
+                System.out.println("Retrying...");
+            }
+        }
         for (Folder folder : emailStore.getDefaultFolder().list("*")) {
             System.out.println(folder);
         }

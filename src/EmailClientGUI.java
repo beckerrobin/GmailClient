@@ -2,9 +2,9 @@ import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.SoftBevelBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -14,40 +14,50 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class EmailClientGUI {
-    private JList mailList;
-    private JButton newButton;
-    private JTextArea bodyArea;
-    private JTextField fromField;
-    private JTextField toField;
-    private JTextField ccField;
-    private JLabel accountLabel;
-    private JPanel panel;
-    private JScrollPane bodyScroll;
-    private JLabel subjectLabel;
+    private final int emailCount = 2;
     private List<Mail> mailArrayList = Collections.synchronizedList(new ArrayList<>());
     private GmailClient gmailClient;
     private ExecutorService executorService = Executors.newCachedThreadPool();
-
-    private final int emailCount = 3;
-
+    // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
+    // Generated using JFormDesigner Evaluation license - unknown
+    private JPanel panel;
+    private JLabel accountLabel;
+    private JButton newButton;
+    private JTextField fromField;
+    private JTextField ccField;
+    private JScrollPane bodyScroll;
+    private JTextArea bodyArea;
+    private JList mailList;
+    private JButton cancelButton;
+    private JButton sendButton;
+    private JLabel fromLabel;
+    private JTextField toField;
+    private JTextField subjectField;
     EmailClientGUI(GmailClient gmailClient) {
         this.gmailClient = gmailClient;
         this.accountLabel.setText(gmailClient.getUsername());
+        readMode();
 
         mailList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
+                readMode();
                 Mail mail = (Mail) mailList.getSelectedValue();
                 this.fromField.setText(mail.getFrom());
                 this.toField.setText(mail.getTo());
-                this.subjectLabel.setText(mail.getSubject());
+                this.subjectField.setText(mail.getSubject());
+                this.subjectField.setCaretPosition(0);
                 this.bodyArea.setText(mail.getBody());
                 this.bodyArea.setCaretPosition(0);
             }
         });
         newButton.addActionListener(e -> newMail());
+        cancelButton.addActionListener(e -> readMode());
     }
 
     void show() {
+        if (gmailClient.isConnected()) {
+            this.newButton.setEnabled(true);
+        }
         JFrame frame = new JFrame("Email Client");
         frame.setPreferredSize(new Dimension(800, 600));
         frame.setContentPane(this.panel);
@@ -63,22 +73,61 @@ public class EmailClientGUI {
                     gmailClient.close();
                 } catch (MessagingException ex) {
                     ex.printStackTrace();
+                    System.exit(2);
                 }
             }
         });
     }
 
-    private void newMail() {
+    private void composeMode() {
+        this.toField.setEditable(true);
+        this.toField.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+        this.ccField.setEditable(true);
+        this.ccField.setBorder(new SoftBevelBorder(BevelBorder.LOWERED));
+
+        this.subjectField.setEditable(true);
+        this.subjectField.setBorder(UIManager.getLookAndFeel().getDefaults().getBorder("TextField.border"));
+
+        this.fromField.setText(this.gmailClient.getUsername());
+        this.sendButton.setVisible(true);
+        this.cancelButton.setVisible(true);
+
+    }
+
+    private void readMode() {
+        this.toField.setEditable(false);
+        this.toField.setBorder(UIManager.getLookAndFeel().getDefaults().getBorder("TextField.border"));
+        this.ccField.setEditable(false);
+        this.ccField.setBorder(UIManager.getLookAndFeel().getDefaults().getBorder("TextField.border"));
+        this.subjectField.setEditable(false);
+        this.subjectField.setBorder(null);
+
+        this.sendButton.setVisible(false);
+        this.cancelButton.setVisible(false);
+        this.fromField.setText("");
         this.toField.setText("");
+        this.ccField.setText("");
+        this.subjectField.setText("");
         this.bodyArea.setText("");
     }
+
+    private void newMail() {
+        composeMode();
+        this.toField.setText("");
+        this.ccField.setText("");
+        this.subjectField.setText("");
+        this.bodyArea.setText("");
+        this.mailList.setSelectedIndex(-1);
+        this.toField.grabFocus();
+    }
+
     void populateMailList() throws MessagingException {
         Folder emailFolder = gmailClient.getOpenFolder("INBOX");
         int mailCount = emailFolder.getMessageCount();
 
         Message[] messages;
         if (mailCount >= emailCount)
-             messages= emailFolder.getMessages(mailCount - emailCount, mailCount);
+            messages = emailFolder.getMessages(mailCount - emailCount + 1, mailCount);
         else
             messages = emailFolder.getMessages();
         for (Message message : messages) {
@@ -100,4 +149,5 @@ public class EmailClientGUI {
         Collections.reverse(this.mailArrayList);
         this.mailList.setListData(this.mailArrayList.toArray());
     }
+    // JFormDesigner - End of variables declaration  //GEN-END:variables
 }

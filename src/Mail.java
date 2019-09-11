@@ -18,7 +18,7 @@ class Mail{
 
     @Override
     public String toString() {
-        return this.id + ":" + (subject.length()>13 ? subject.substring(0, 10) + "..." : subject) + " " + from;
+        return (subject.length() > 16 ? subject.substring(0, 13) + "..." : subject) + " " + from;
     }
 
     String getBody() {

@@ -12,7 +12,7 @@ public class Main {
         }
 
         new ConnectForm(client);
-        if (!(client.getUsername() == null || client.getUsername().isBlank() || client.getUsername() == "Username")) {
+        if (!(client.getUsername() == null || client.getUsername().isBlank() || client.getUsername().equals("Username"))) {
             try {
                 client.connect();
             } catch (MessagingException e) {
