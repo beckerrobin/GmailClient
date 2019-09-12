@@ -1,6 +1,7 @@
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.internet.InternetAddress;
+import java.util.Objects;
 
 public class Mail {
     private String subject;
@@ -14,6 +15,19 @@ public class Mail {
         this.from = ((InternetAddress)message.getFrom()[0]).getAddress();
         this.id = message.getMessageNumber();
         this.to = ((InternetAddress)message.getAllRecipients()[0]).getAddress();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Mail mail = (Mail) o;
+        return id == mail.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     @Override

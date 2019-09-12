@@ -1,5 +1,3 @@
-import javax.mail.Folder;
-import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -9,18 +7,15 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
 
+import static java.lang.Thread.sleep;
+
 public class EmailClientGUI {
-    private final int emailCount = 2;
-    private List<Mail> mailArrayList = Collections.synchronizedList(new ArrayList<>());
     private GmailClient gmailClient;
-    private ExecutorService executorService = Executors.newCachedThreadPool();
+    private Thread guiUpdate;
+    private String selectedFolder = "INBOX";
+
     // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
     // Generated using JFormDesigner Evaluation license - unknown
     private JPanel panel;
@@ -39,13 +34,14 @@ public class EmailClientGUI {
     private JPanel buttonPanel;
     private JPanel rightPanel;
 
+
     EmailClientGUI(GmailClient gmailClient) {
         this.gmailClient = gmailClient;
         this.accountLabel.setText(gmailClient.getUsername());
         readMode();
 
         mailList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
+            if (!e.getValueIsAdjusting() && mailList.getSelectedIndex() >= 0) {
                 readMode();
                 Mail mail = (Mail) mailList.getSelectedValue();
                 this.fromField.setText(mail.getFrom());
@@ -135,6 +131,31 @@ public class EmailClientGUI {
             this.newButton.setEnabled(true);
         }
         JFrame frame = new JFrame("GmailKlient");
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+                super.windowOpened(e);
+
+                // Constantly update GUI if client is connected
+                guiUpdate = new Thread(() -> {
+                    while (true) {
+                        if (gmailClient.isConnected())
+                            try {
+                                populateMailList();
+                            } catch (MessagingException ex) {
+                                ex.printStackTrace();
+                            }
+                        try {
+                            sleep(5000);
+                        } catch (InterruptedException ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                });
+                guiUpdate.setPriority(3);
+                guiUpdate.start();
+            }
+        });
         frame.setPreferredSize(new Dimension(800, 600));
         frame.setContentPane(this.panel);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -145,7 +166,6 @@ public class EmailClientGUI {
             public void windowClosing(WindowEvent e) {
                 super.windowClosing(e);
                 try {
-                    executorService.shutdown();
                     gmailClient.close();
                 } catch (MessagingException ex) {
                     ex.printStackTrace();
@@ -193,33 +213,9 @@ public class EmailClientGUI {
         this.toField.grabFocus();
     }
 
-    void populateMailList() throws MessagingException {
-        Folder emailFolder = gmailClient.getOpenFolder("INBOX");
-        int mailCount = emailFolder.getMessageCount();
+    private void populateMailList() throws MessagingException {
+        this.mailList.setListData(gmailClient.getLocalMail(gmailClient.getFolder(selectedFolder)));
 
-        Message[] messages;
-        if (mailCount >= emailCount)
-            messages = emailFolder.getMessages(mailCount - emailCount + 1, mailCount);
-        else
-            messages = emailFolder.getMessages();
-        for (Message message : messages) {
-            Mail mailObj;
-            try {
-                mailObj = new Mail(message);
-
-                executorService.submit(new SetMailBody(mailObj, emailFolder, gmailClient));
-            } catch (MessagingException | ArrayIndexOutOfBoundsException e) {
-                e.printStackTrace();
-                continue;
-            }
-            this.mailArrayList.add(mailObj);
-
-            ArrayList<Mail> messageArrayCopy = new ArrayList<>(this.mailArrayList);
-            Collections.reverse(messageArrayCopy);
-            this.mailList.setListData(messageArrayCopy.toArray());
-        }
-        Collections.reverse(this.mailArrayList);
-        this.mailList.setListData(this.mailArrayList.toArray());
     }
     // JFormDesigner - End of variables declaration  //GEN-END:variables
 }
