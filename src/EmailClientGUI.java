@@ -7,6 +7,9 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import static java.lang.Thread.sleep;
@@ -141,7 +144,7 @@ public class EmailClientGUI {
                     while (true) {
                         if (gmailClient.isConnected())
                             try {
-                                populateMailList();
+                                populateMailList(); // Populate the left column with mails from the selected folder
                             } catch (MessagingException ex) {
                                 ex.printStackTrace();
                             }
@@ -214,7 +217,9 @@ public class EmailClientGUI {
     }
 
     private void populateMailList() throws MessagingException {
-        this.mailList.setListData(gmailClient.getLocalMail(gmailClient.getFolder(selectedFolder)));
+        List<Mail> mails = Arrays.asList(gmailClient.getLocalMail(gmailClient.getFolder(selectedFolder)));
+        Collections.reverse(mails);
+        this.mailList.setListData(mails.toArray(Mail[]::new));
 
     }
     // JFormDesigner - End of variables declaration  //GEN-END:variables

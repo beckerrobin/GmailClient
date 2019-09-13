@@ -13,8 +13,10 @@ class FetchMailBody implements Runnable {
     @Override
     public void run() {
         try {
+            System.out.println("Hämtar body för " + this.mail.getId());
             mail.setBody(this.getMailBody());
             System.out.println("Hämtat body för " + this.mail.getId());
+
         } catch (MessagingException | IOException e) {
             System.out.println("Error för " + this.mail.getId() + ": " + e.getMessage());
         }
