@@ -10,6 +10,7 @@ import java.awt.event.WindowEvent;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
 import static java.lang.Thread.sleep;
@@ -40,7 +41,6 @@ public class EmailClientGUI {
 
     EmailClientGUI(GmailClient gmailClient) {
         this.gmailClient = gmailClient;
-        this.accountLabel.setText(gmailClient.getUsername());
         readMode();
 
         mailList.addListSelectionListener(e -> {
@@ -93,7 +93,7 @@ public class EmailClientGUI {
                         "(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[" +
                         "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?" +
                         "|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[" +
-                        "\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])");
+                        "\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)])");
         return p.matcher(email).matches();
     }
 
@@ -103,8 +103,6 @@ public class EmailClientGUI {
     }
 
     private void showWrongInput(JTextField field) {
-//            field.setForeground(Color.red);
-//            field.setFont(field.getFont().deriveFont(Font.BOLD));
         field.setBackground(new Color(0xffcabd));
     }
 
@@ -124,32 +122,65 @@ public class EmailClientGUI {
         // Check body?
 
         // Send via SMTP
-        boolean res = gmailClient.sendMail(this.toField.getText(), this.subjectField.getText(), this.bodyArea.getText());
+        LoadingPopup sendMailPopup = new LoadingPopup("Skickar meddelandet...");
+
+        SwingWorker sw = new SwingWorker<Boolean, Void>() {
+            @Override
+            protected Boolean doInBackground() {
+                return gmailClient.sendMail(toField.getText(), subjectField.getText(), bodyArea.getText());
+            }
+
+            @Override
+            protected void done() {
+                sendMailPopup.setVisible(false);
+                sendMailPopup.dispose();
+            }
+        };
+        sw.execute();
+        sendMailPopup.setVisible(true);
+
+        boolean res = false;
+        try {
+            res = (boolean) sw.get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+
         if (res)
             readMode();
     }
 
     void show() {
-        if (gmailClient.isConnected()) {
-            this.newButton.setEnabled(true);
-        }
         JFrame frame = new JFrame("GmailKlient");
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
                 super.windowOpened(e);
-
                 // Constantly update GUI if client is connected
                 guiUpdate = new Thread(() -> {
+                    boolean disconned = true;
                     while (true) {
-                        if (gmailClient.isConnected())
-                            try {
-                                populateMailList(); // Populate the left column with mails from the selected folder
-                            } catch (MessagingException ex) {
-                                ex.printStackTrace();
+                        if (gmailClient.isConnected()) {
+                            if (disconned) {
+                                disconned = false;
+                                accountLabel.setText(gmailClient.getUsername());
+                                newButton.setEnabled(true);
                             }
+                            populateMailList(); // Populate the left column with mails from the selected folder
+                        } else {
+                            if (!disconned) {
+                                accountLabel.setText("Ansluter till gmail...");
+                                newButton.setEnabled(false);
+                                if (gmailClient.connect()) {
+                                    disconned = true;
+                                    continue;
+                                }
+                            } else {
+                                accountLabel.setText("Ingen anslutning");
+                            }
+                        }
                         try {
-                            sleep(5000);
+                            sleep(2000);
                         } catch (InterruptedException ex) {
                             ex.printStackTrace();
                         }
@@ -163,6 +194,7 @@ public class EmailClientGUI {
         frame.setContentPane(this.panel);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
+        frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         frame.addWindowListener(new WindowAdapter() {
             @Override
@@ -171,7 +203,8 @@ public class EmailClientGUI {
                 try {
                     gmailClient.close();
                 } catch (MessagingException ex) {
-                    ex.printStackTrace();
+                    System.out.println(ex.getMessage());
+//                    ex.printStackTrace();
                     System.exit(2);
                 }
             }
@@ -216,7 +249,7 @@ public class EmailClientGUI {
         this.toField.grabFocus();
     }
 
-    private void populateMailList() throws MessagingException {
+    private void populateMailList() {
         List<Mail> mails = Arrays.asList(gmailClient.getLocalMail(gmailClient.getFolder(selectedFolder)));
         Collections.reverse(mails);
         this.mailList.setListData(mails.toArray(Mail[]::new));
