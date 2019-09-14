@@ -12,15 +12,12 @@ public class Main {
         }
 
         new ConnectForm(client);
-        if (!(client.getUsername() == null || client.getUsername().isBlank() || client.getUsername().equals("Username"))) {
-            try {
-                client.connect();
-            } catch (MessagingException e) {
-                e.printStackTrace();
-            }
-        }
+        client.connect();
         EmailClientGUI gui = new EmailClientGUI(client);
         SwingUtilities.invokeLater(gui::show);
+
+        if (client.isConnected())
+            client.init();
     }
 }
 

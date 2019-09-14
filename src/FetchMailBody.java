@@ -13,9 +13,7 @@ class FetchMailBody implements Runnable {
     @Override
     public void run() {
         try {
-            System.out.println("Hämtar body för " + this.mail.getId());
             mail.setBody(this.getMailBody());
-            System.out.println("Hämtat body för " + this.mail.getId());
 
         } catch (MessagingException | IOException e) {
             System.out.println("Error för " + this.mail.getId() + ": " + e.getMessage());
@@ -31,7 +29,6 @@ class FetchMailBody implements Runnable {
             Multipart multipart = (Multipart) content;
             for (int i = 0; i < multipart.getCount(); i++) {
                 Part part = multipart.getBodyPart(i);
-                System.out.println(this.mail.getId() + ": (" + i + "/" + multipart.getCount() + ") " + part.getContentType());
                 if ((part.isMimeType("text/plain")) || (multipart.getCount() == 1 && part.isMimeType("text/html"))) {
                     messageContent.append(part.getContent().toString());
                 }

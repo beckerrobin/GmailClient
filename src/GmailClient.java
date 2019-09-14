@@ -56,55 +56,33 @@ public class GmailClient {
         this.imapStore = (IMAPStore) imapSession.getStore("imap");
     }
 
-    void connect() throws MessagingException {
-        final int connectRetries = 3;
+    boolean connect() {
         System.out.println("Connecting...");
-
-        for (int i = 0; true; i++) {
-            try {
-                this.imapStore.connect(this.username, this.password);
-                break;
-            } catch (MessagingException e) {
-                if (i < connectRetries - 1) {
-                    System.out.println("Retrying...");
-                } else {
-                    System.out.println("Could not connect: " + e.getMessage());
-                    return;
-                }
-            }
+        try {
+            this.imapStore.connect(this.username, this.password);
+        } catch (MessagingException e) {
+            System.out.println("Unable to connect: " + e.getMessage());
+            return false;
         }
 
         // LIST ALL FOLDERS
-        for (Folder folder : imapStore.getDefaultFolder().list("*")) {
-            System.out.println(folder);
+        try {
+            for (Folder folder : imapStore.getDefaultFolder().list("*")) {
+                System.out.println(folder);
+            }
+        } catch (MessagingException e) {
+            System.out.println("Could not get list of folders: " + e.getMessage());
+            return false;
         }
+        return true;
+    }
 
+    void init() {
         // OPEN INBOX
         Folder inboxFolder = getFolder("INBOX");
-        newMailTasks.add(new FutureTask<>(() -> {
-            try {
-                while (true) {
-                    Message[] messages = checkNewMail(inboxFolder);
-                    List<Mail> mails = new ArrayList<>();
-                    for (Message message : messages) {
-                        mails.add(new Mail(message));
-                    }
-                    addMailsToMap(inboxFolder, mails);
-                    sleep(5000); // How long to wait before checking for mail again, allowed to be interrupted
-                }
-            } catch (InterruptedException e) {
-                System.out.println("Stopping NewMailFuture for " + inboxFolder + " because " + e.getMessage());
-            } catch (MessagingException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }));
 
-        // ADD LAST 5 MAILS TO MAP
-        fetchMails(inboxFolder, 5);
-
-        // ADD THOSE MAILS TO STACK FOR BODY-FETCHING
-
+        // INITIALLY ADD LATEST 5 MAILS TO MAP
+        fetchMails(inboxFolder, 2);
 
         // START LOOKING FOR NEW MAIL IN INBOX
         for (FutureTask<Void> newMailFuture : newMailTasks) {
@@ -112,13 +90,18 @@ public class GmailClient {
         }
     }
 
+    void selectFolder(String folder) {
+
+    }
+
     /**
      * Thread-safe to add new mails to Folder-Mail-Map
+     *
      * @param folder: Key
      * @param mails:  Value
      */
     private void addMailsToMap(Folder folder, List<Mail> mails) {
-        synchronized (this.folderMailMap) {
+        synchronized (this.folderMailMap.get(folder)) {
             this.folderMailMap.get(folder).addAll(mails);
         }
         for (Mail mail : mails) {
@@ -131,10 +114,23 @@ public class GmailClient {
         });
     }
 
+    private void addMailToMap(Folder folder, Mail mail) {
+        synchronized (this.folderMailMap.get(folder)) {
+            this.folderMailMap.get(folder).add(mail);
+        }
+        mailBodyES.submit(new FetchMailBody(mail, folder));
+    }
+
     private synchronized void addFolderMailMap(Folder folder, TreeSet<Mail> set) {
         this.folderMailMap.put(folder, set);
     }
 
+    /**
+     * Returns an array of the Mail-objects from specified folder that has already been fetched
+     *
+     * @param folder Folder to return Mail-objects from
+     * @return A Mail-array
+     */
     Mail[] getLocalMail(Folder folder) {
         return this.folderMailMap.get(folder).toArray(Mail[]::new);
     }
@@ -160,19 +156,21 @@ public class GmailClient {
      * @param amount How many messages to get
      * @throws MessagingException
      */
-    private void fetchMails(Folder folder, int amount) throws MessagingException {
-        int messageCount = folder.getMessageCount();
-        Message[] messages = folder.getMessages(messageCount - amount + 1, messageCount);
-        ArrayList<Mail> fetchedMails = new ArrayList<>();
-        for (Message message : messages) {
-            fetchedMails.add(new Mail(message));
+    private void fetchMails(Folder folder, int amount) {
+        try {
+            int messageCount = folder.getMessageCount();
+            Message[] messages = folder.getMessages(messageCount - amount + 1, messageCount);
+            for (Message message : messages) {
+                addMailToMap(folder, new Mail(message));
+            }
+        } catch (MessagingException e) {
+            e.printStackTrace();
         }
-
-        addMailsToMap(folder, fetchedMails);
     }
 
     /**
      * Check if IMAP connected
+     *
      * @return true if imap-store is connected, else false
      */
     boolean isConnected() {
@@ -181,9 +179,10 @@ public class GmailClient {
 
     /**
      * Send a new mail via SMTP
-     * @param to Mail recepient
+     *
+     * @param to      Mail recepient
      * @param subject Mail subject
-     * @param body Mail body
+     * @param body    Mail body
      * @return return true if successful, else false
      */
     boolean sendMail(String to, String subject, String body) {
@@ -193,7 +192,7 @@ public class GmailClient {
                         return new PasswordAuthentication(username, password);
                     }
                 });
-//        smtpSession.setDebug(true);
+        smtpSession.setDebug(true);
 
         MimeMessage message = new MimeMessage(smtpSession);
         try {
@@ -222,6 +221,8 @@ public class GmailClient {
      * @return array of Message of the returned emails
      */
     private Message[] checkNewMail(Folder folder) throws MessagingException {
+        if (!folder.isOpen())
+            folder.open(Folder.READ_ONLY);
         int lastId = this.folderMailMap.get(folder).last().getId();
         return folder.getMessages(lastId + 1, folder.getMessageCount());
     }
@@ -237,16 +238,48 @@ public class GmailClient {
      * @param folderName: String
      * @return Returnerar en öppen Folder
      */
-    Folder getFolder(String folderName) throws MessagingException {
-        Folder folder = this.imapStore.getFolder(folderName.toLowerCase());
-//        boolean folderExists = this.folderMailMap.keySet().stream().anyMatch(f->f.getFullName().equals(folder.getFullName()));
+    synchronized Folder getFolder(String folderName) {
+        Folder folder;
+        try {
+            folder = this.imapStore.getFolder(folderName.toLowerCase());
+        } catch (MessagingException e) {
+            System.out.println("Could not open folder: " + e.getMessage());
+            return null;
+        }
+
         Optional<Folder> folderExists = this.folderMailMap.keySet().stream().findFirst();
+
         if (folderExists.isPresent()) {
+            // Folder opened before
             return this.folderMailMap.keySet().stream().findFirst().get();
         } else {
-            folder.open(Folder.READ_ONLY);
-            System.out.println("Adding folder " + folderName);
+            // First time folder is opened
+            System.out.println("Opening folder: " + folderName);
+            try {
+                folder.open(Folder.READ_ONLY);
+            } catch (MessagingException e) {
+                System.out.println("Could not open folder as Read-only: " + e.getMessage());
+                return null;
+            }
             addFolderMailMap(folder, new TreeSet<>(Comparator.comparingInt(Mail::getId)));
+
+            // TODO: Gör detta generiskt för alla mappar
+            newMailTasks.add(new FutureTask<>(() -> {
+                while (true) {
+                    try {
+                        Message[] messages = checkNewMail(folder);
+                        List<Mail> mails = new ArrayList<>();
+                        for (Message message : messages) {
+                            mails.add(new Mail(message));
+                        }
+                        addMailsToMap(folder, mails);
+
+                    } catch (MessagingException ignored) {
+                    }
+                    sleep(5000); // How long to wait before checking for mail again, allowed to be interrupted
+                }
+            }));
+
             return folder;
         }
     }
@@ -254,8 +287,14 @@ public class GmailClient {
     void close() throws MessagingException {
         System.out.println("Closing gmail client");
 
-        System.out.println("Canceling new-mail tasks");
-        newMailTasks.forEach(e -> e.cancel(true));
+        if (!newMailTasks.isEmpty()) {
+            System.out.println("Canceling check-for-new-mail tasks");
+            newMailTasks.forEach(e -> {
+                if (!e.isCancelled()) {
+                    e.cancel(true);
+                }
+            });
+        }
 
         System.out.println("Shutting down new mail exec-service");
         newMailES.shutdown();
@@ -265,11 +304,15 @@ public class GmailClient {
 
         System.out.println("Closing folders");
         for (Folder openFolder : this.folderMailMap.keySet()) {
-            System.out.println("Closing " + openFolder.getFullName());
-            openFolder.close();
+            if (openFolder.isOpen()) {
+                System.out.println("Closing " + openFolder.getFullName());
+                openFolder.close();
+            }
         }
 
-        System.out.println("Closing IMAP store");
-        this.imapStore.close();
+        if (this.imapStore.isConnected()) {
+            System.out.println("Closing IMAP store");
+            this.imapStore.close();
+        }
     }
 }
