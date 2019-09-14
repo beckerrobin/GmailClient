@@ -114,7 +114,7 @@ public class GmailClient {
         });
     }
 
-<<<<<<< HEAD
+
     /**
      * Lägger till mail i den lokala listan och skapar en tråd som hämtar Body
      *
@@ -123,9 +123,6 @@ public class GmailClient {
      */
     private void addMailToMap(Folder folder, Mail mail) {
         // TODO: Hämta body först och sen lägg till?
-=======
-    private void addMailToMap(Folder folder, Mail mail) {
->>>>>>> 04af723c2df2973cc2c82356e26de6776c4c586c
         synchronized (this.folderMailMap.get(folder)) {
             this.folderMailMap.get(folder).add(mail);
         }
