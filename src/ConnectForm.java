@@ -1,5 +1,10 @@
 import javax.swing.*;
 import java.awt.event.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class ConnectForm extends JDialog {
     private JPanel contentPane;
@@ -9,18 +14,27 @@ public class ConnectForm extends JDialog {
     private JPasswordField passwordField;
     private GmailClient gmailClient;
 
-    public ConnectForm(GmailClient eclient) {
-        this.gmailClient = eclient;
-        this.userField.setText("becker.b.robin@gmail.com");
-        this.passwordField.setText("lnhrdmevuyvoybzg");
+    public ConnectForm(GmailClient gmailClient) {
+        this.gmailClient = gmailClient;
 
+        // Autofyll senast använda inloggningsuppgifterna om dessa finns
+        File loginFile = new File(GmailClient.LOGIN_FILE_PATH);
+        if (loginFile.exists() && loginFile.canRead()) {
+            try (BufferedReader br = new BufferedReader(new FileReader(loginFile, StandardCharsets.UTF_16))) {
+                String data = br.readLine();
+                String[] stringArr = data.split(";");
+                this.userField.setText(stringArr[0]);
+                this.passwordField.setText(stringArr[1]);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         setContentPane(contentPane);
         setModal(true);
         setTitle("Anslut...");
         getRootPane().setDefaultButton(buttonOK);
 
         buttonOK.addActionListener(e -> onOK());
-
         buttonCancel.addActionListener(e -> onCancel());
 
         // call onCancel() when cross is clicked
@@ -44,12 +58,12 @@ public class ConnectForm extends JDialog {
     }
 
     private void onOK() {
-        this.gmailClient.setParams(this.userField.getText(), this.passwordField.getPassword());
+        this.gmailClient.setParams(this.userField.getText(), String.valueOf(this.passwordField.getPassword()));
         dispose();
+        this.gmailClient.init();
     }
 
     private void onCancel() {
-        // add your code here if necessary
         dispose();
     }
 }
