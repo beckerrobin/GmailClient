@@ -13,7 +13,7 @@ import javax.swing.border.SoftBevelBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -152,7 +152,7 @@ public class EmailClientGUI {
             loadProgress = 0;
     }
 
-    private void deleteMail(Mail mail) throws MessagingException {
+    private void deleteMail(Mail mail) {
         Executors.newSingleThreadExecutor().submit(new Runnable() {
             @Override
             public void run() {
@@ -194,6 +194,9 @@ public class EmailClientGUI {
         });
     }
 
+    /**
+     * Välj ett mail, förändra GUI:et
+     */
     private void selectMail(Mail mail) {
         readMode();
         fromField.setText(mail.getFrom());
@@ -206,11 +209,7 @@ public class EmailClientGUI {
             cancelButton.removeActionListener(actionListener);
         }
         cancelButton.addActionListener(event -> {
-            try {
-                deleteMail(mail);
-            } catch (MessagingException e) {
-                e.printStackTrace();
-            }
+            deleteMail(mail);
         });
         cancelButton.setVisible(true);
         cancelButton.setEnabled(true);
@@ -321,11 +320,13 @@ public class EmailClientGUI {
         }
 
         // Check CC
-        String[] ccAdresses = this.ccField.getText().trim().split(";\\s*");
-        for (String ccAdress : ccAdresses) {
-            if (!isMailAddress(ccAdress)) {
-                showWrongInput(this.ccField);
-                return;
+        if (!this.ccField.getText().isBlank()) {
+            String[] ccAdresses = this.ccField.getText().trim().split(";\\s*");
+            for (String ccAdress : ccAdresses) {
+                if (!isMailAddress(ccAdress)) {
+                    showWrongInput(this.ccField);
+                    return;
+                }
             }
         }
 
@@ -533,9 +534,12 @@ public class EmailClientGUI {
         toField.grabFocus();
     }
 
+    /**
+     * Fyll det grafiska tabellen med mail från den specifika listan
+     */
     private void populateMailList(String selectedFolder) {
         List<Mail> mails = Arrays.asList(gmailClient.getMailArray(selectedFolder));
-        Collections.reverse(mails);
+        mails.sort(Comparator.comparing(Mail::getDate).reversed());
         mailList.setListData(mails.toArray(Mail[]::new));
     }
 

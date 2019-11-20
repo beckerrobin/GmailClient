@@ -11,7 +11,7 @@ import java.util.Objects;
 /**
  * Klass för Mail-objekt. Innehåller Mail-data.
  */
-public class Mail implements Serializable, Comparable<Mail> {
+public class Mail implements Serializable {
     static final String defaultBody = "Laddar innehåll...";
     private static final long serialVersionUID = 1L;
     private String parentFolder;
@@ -32,12 +32,14 @@ public class Mail implements Serializable, Comparable<Mail> {
         this.from = ((InternetAddress) message.getFrom()[0]).getAddress();
         this.messageNumber = message.getMessageNumber();
 
+        // Mottagareadresser
         ArrayList<String> toArr = new ArrayList<>();
         for (Address recepient : message.getRecipients(Message.RecipientType.TO)) {
             toArr.add(((InternetAddress) recepient).getAddress());
         }
         this.to = String.join("; ", toArr);
 
+        // CC-addresser
         if (message.getRecipients(Message.RecipientType.CC) != null) {
             ArrayList<String> ccArr = new ArrayList<>();
             for (Address recepient : message.getRecipients(Message.RecipientType.CC)) {
@@ -45,6 +47,8 @@ public class Mail implements Serializable, Comparable<Mail> {
             }
             this.cc = String.join("; ", ccArr);
         }
+
+        // Datum
         this.date = message.getReceivedDate();
     }
 
@@ -134,11 +138,6 @@ public class Mail implements Serializable, Comparable<Mail> {
 
     int getMessageNumber() {
         return messageNumber;
-    }
-
-    @Override
-    public int compareTo(Mail mail) {
-        return Integer.compare(this.messageNumber, mail.messageNumber);
     }
 
     public String getCc() {
